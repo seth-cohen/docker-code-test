@@ -56,22 +56,29 @@ def get_node_ip(cluster):
   print('nodes', cluster.nodes)
   nodes    = cluster.nodes
   node_uri = nodes[0]
-  node     = tutum.Node.fetch(node)
-  print 'node ip: %s' % node.ip
+  node_uuid = node_uri.replace('/api/v1/node/', '').replace('/', '')
+  node     = tutum.Node.fetch(node_uuid)
+  print 'node ip: %s' % node.public_ip
 
 # Will deploy a new service with the image name, to all nodeclusters with the tad 'username'
 # note that the clusters must already be in a deployed state for this to succeed
 def create_service(username):
   # TODO Copy the user's public key via an environment variable into the container so that they can ssh into it with the give PEM file
-  # TODO Copy username to env variable so we can clone the right repo into the container
+  # TODO Copy username to env variable so we can clone the right repo into the container, this won't work... image will already be built
   print 'Creating containter: %s' % username 
-  with open(r'/Users/seth/Docker/keys/' + name) as pub_key:
+  with open(r'/Users/seth/Docker/wayfair/tutum.pub') as pub_key:
     key_data = pub_key.read()
   service_tags  = [{'name':username}]
   service_image = 'wayfairseth/labslamp'
-  service_ports = [{'protocol': 'tcp', 'inner_port': 80, 'outer_port': 80, 'published':True}, {'protocol': 'tcp', 'inner_port': 22, 'outer_port': 2222, 'published': True}]
-  service_env   = [{'key': 'AUTHORIZED_KEYS', 'value': key_data}]
-  service       = tutum.Service.create(image=service_image, name=username, container_ports=service_ports, tags=service_tags)
+  service_ports = [
+      {'protocol': 'tcp', 'inner_port': 80, 'outer_port': 80, 'published':True},
+      {'protocol': 'tcp', 'inner_port': 22, 'outer_port': 2222, 'published': True}
+  ]
+  service_env   = [
+      {'key': 'AUTHORIZED_KEYS', 'value': key_data},
+      {'key': 'LABS_USER_NAME', 'value': username}
+  ]
+  service       = tutum.Service.create(image=service_image, name=username, container_ports=service_ports, tags=service_tags, container_envvars=service_env)
   
   if service.save():
     print 'Successfully created service: %s' % username
@@ -155,13 +162,18 @@ def git_create_user(name):
   proc = subprocess.Popen(['git', 'push'], cwd=git_dir, stdout=PIPE, stdin=PIPE);
   print proc.communicate()[0];
   
+  # Need to give the user access to his remote repository on the git server so ssh in and set that up
+  print 'Adding user %s to the git server' % name
+  proc = subprocess.Popen(['ssh', 'ubuntu@52.91.239.205', 'sudo htpasswd -b %s %s' % (name, 'wayfair1')], stdout=PIPE, stdin=PIPE)
+  print proc.communicate()[0]; # debug only
+
+
 # --------------- ENTRY POINT ----------------
 name = raw_input('Enter candidate\'s username: ')
 
 # Need to set up the user's repos and access on the git server.
 git_create_user(name)
 git_clone_master(name)
-sys.exit()
 
 # Create the node cluster
 nodecluster = create_node(name)
@@ -190,7 +202,7 @@ while node_ready == False:
       count = 0
 
 # Get the IP address of the node that we will be deploying on
-node_ip = get_ip(nodecluster)
+node_ip = get_node_ip(nodecluster)
 
 # Create the service (which is really just an alias for the Docker container)
 service = create_service(name)
