@@ -164,7 +164,7 @@ def git_create_user(name):
   
   # Need to give the user access to his remote repository on the git server so ssh in and set that up
   print 'Adding user %s to the git server' % name
-  proc = subprocess.Popen(['ssh', 'ubuntu@52.91.239.205', 'sudo htpasswd -b %s %s' % (name, 'wayfair1')], stdout=PIPE, stdin=PIPE)
+  proc = subprocess.Popen(['ssh', 'ubuntu@52.91.239.205', 'sudo htpasswd -b %s %s %s' % (r'/etc/apache2/.htpasswd', name, 'wayfair1')], stdout=PIPE, stdin=PIPE)
   print proc.communicate()[0]; # debug only
 
 
