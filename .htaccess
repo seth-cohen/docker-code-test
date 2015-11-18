@@ -1,0 +1,4 @@
+AuthType Basic
+AuthName "Private Directory Access"
+AuthUserFile /var/www/.htpassword
+require valid-user

@@ -104,6 +104,12 @@
         </ul>
       </li>
       <li>Include the Database support file <span class="code">include once "private/dbo.php"</span>, this will provide you with an object that you can use to connect to the DB and write queries</li>
+      <li>There are no other requirements or limitations other than being able to add new ToDo Items, mark them as complete or not and of course viewing them.
+        <ul>
+          <li>This can be as flashy as you want, can be a single page app or several different scripts</li>
+          <li>Please add a link at the bottom of your app that will point to a page that lists, further refinements or alternate design choices that you would have implemented had you been given more time.</li>
+        </ul>
+      </li>
     </ul>
   </div>
 </body>
