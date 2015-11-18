@@ -7,8 +7,8 @@ import shutil     # to copy over the .pub key files for git
 import os         # to create any directories needed for shutil
 
 # TODO pull tutum globals and functions into separate module 
-tutum.user   = "wayfairseth"
-tutum.apikey = "7a0aa0f595e3a3d9f8e5f9b3e1dd5956a69f3981"
+tutum.user   = 'wayfairseth'
+tutum.apikey = '7a0aa0f595e3a3d9f8e5f9b3e1dd5956a69f3981'
 node_ready   = False
 nodecluster  = False # this will be the handle to the EC2 instance via the tutum API
 node         = False # this is the particular node that fired up on the EC2 instance
@@ -97,26 +97,36 @@ def git_configure_repo(name):
   # Clone the repo that we just created when we created the user (we don't need to keep this; 
   #   just setting up the user's repo with the files they'll need)
   # Add the index.php file to the public folder add the PEM to the private folder
-  pvt_src         = r'/Users/seth/Docker/keys/' + name
   pvt_dst_path    = r'/Users/seth/Docker/' + name + r'/private'
-  index_src       = r'/Users/seth/Docker/index.php' 
+  pvt_key_src     = r'/Users/seth/Docker/keys/' + name
+  htaccess_src    = r'/Users/seth/Docker/.htaccess'
   dl_pk_src       = r'/Users/seth/Docker/dl_pk.php' 
-  public_dst_path = r'/Users/seth/Docker/' + name + r'/public'
+  public_dst_path = r'/Users/seth/Docker/' + name
+  index_src       = r'/Users/seth/Docker/index.php' 
  
   PIPE = subprocess.PIPE
   print 'Cloning the User\'s repository locally'
   proc = subprocess.Popen(['git', 'clone', 'git@52.91.239.205:' + name + '.git'], stdout=PIPE, stdin=PIPE)
   print proc.communicate()[0] # debug only - print '\t=>Adding the index.php file and private key'
-  
+
   # Actually copy the files over, creating the directories as necessary
   if not os.path.exists(pvt_dst_path + r'/'):
     os.mkdir(pvt_dst_path)
-  shutil.copy2(pvt_src, pvt_dst_path + r'/' + name)
-  
+  shutil.copy2(pvt_key_src, pvt_dst_path + r'/' + name)
+  shutil.copy2(dl_pk_src, pvt_dst_path + r'/dl_pk.php')
+  shutil.copy2(htaccess_src, pvt_dst_path + r'/.htaccess')
+
+  # We need to replace the {1} tokens in the download file to point to the specific user's name
+  filedata = None
+  with open(pvt_dst_path + r'/dl_pk.php', 'r') as dl_pk:
+    filedata = dl_pk.read()
+
+  with open(pvt_dst_path + r'/dl_pk.php', 'w') as dl_pk:
+    dl_pk.write(filedata.replace('{1}', name))
+
   if not os.path.exists(public_dst_path + r'/'):
     os.mkdir(public_dst_path)
   shutil.copy2(index_src, public_dst_path + r'/index.php')
-  shutil.copy2(dl_pk_src, public_dst_path + r'/dl_pk.php')
 
   print '\t=>Adding the new files and directories'
   proc = subprocess.Popen(['git', 'add', '.'], cwd=name, stdout=PIPE, stdin=PIPE)
