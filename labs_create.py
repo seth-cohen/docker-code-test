@@ -14,8 +14,13 @@ nodecluster  = False # this will be the handle to the EC2 instance via the tutum
 node         = False # this is the particular node that fired up on the EC2 instance
 service      = False # this is the service that will run the actual docker container
 
-# event loop message handler, being called by the thread running the Tutum Stream websocket
 def process_event(event):
+  """ The handler called by the on_message event of the TutumEvents Stream SDK. The event loop runs in a separate thread.
+      
+      Note that this requires the use of two globally visible variables (node_ready, nodecluster).
+      This way we can indicate to the main thread that we have received the event that indicates that
+      the node we created has been deployed and we are OK to deploy our container on that node.
+  """
   global node_ready
   global nodecluster
 
@@ -25,8 +30,12 @@ def process_event(event):
       print 'All nodes have been deployed.'
       node_ready = True
 
-# Create an empty node with tag that is labs candidate's username
 def create_node(username):
+  """ Fires up a node cluster (with a single node) using the prescribed provider (AWS) 
+    
+      The node is tagged with the input username. Tutum will deploy containers on all nodes that
+      match the containers tags. 
+  """
   print 'Creating node: %s' % username
   region      = tutum.Region.fetch('aws/us-east-1')
   node_type   = tutum.NodeType.fetch('aws/t2.micro')
@@ -45,10 +54,8 @@ def create_node(username):
   print 'There was an error deploying the server node please contact Seth Cohen <scohen@wayfair.com> for support'
   return false
 
-# Gets the IP address of the node that is running on our nodecluster
 def get_node_ip(cluster):
-  # TODO determine if we really need to fetch the nodecluster again or if it will dynamically update
-  # it looks like the API does not require us to fetch the nodecluster again, the call to .nodes must make an http request
+  """ Returns the IP address of the single node that we have deployed on cluster. """
   print('cluster', cluster)
   print('nodes', cluster.nodes)
   nodes     = cluster.nodes
@@ -58,9 +65,13 @@ def get_node_ip(cluster):
   node      = tutum.Node.fetch(node_uuid)
   print 'node ip: %s' % node.public_ip
 
-# Will deploy a new service with the image name, to all nodeclusters with the tad 'username'
-# note that the clusters must already be in a deployed state for this to succeed
 def create_service(username, pub_key_file):
+  """ Deploys a new service (what Tutum calls a container) to all nodes that are tagged with 'username'
+
+      The contents of pub_key_file are added to authorized_keys file on the remote server, so that the 
+      user can connect via SSH using the private key that we generated for them. Note that this function
+      will fail if the cluster is not already in a deployed state
+  """
   print 'Creating containter: %s' % username 
   # Copy over the public ssh key that we created for gitolite (we might as well use it for SSH also)
   with open(pub_key_file) as pub_key:
@@ -92,8 +103,12 @@ def create_service(username, pub_key_file):
 
 # TODO Pull git methods into own module
 git_dir = r'/Users/seth/Labs/Gitserver/gitolite_config'
-# Configures the repository 'name' into the calling directory. Then adds the default
 def git_configure_repo(name):
+  """ Configures the a private repository for the user on the git server with the name 'name'.
+
+      Clones the repo locally, adds the private key, index.php file and ancillary scripts to the
+      repo. Commits and then pushes this to the git server
+  """
   # Clone the repo that we just created when we created the user (we don't need to keep this; 
   #   just setting up the user's repo with the files they'll need)
   # Add the index.php file to the public folder add the PEM to the private folder
@@ -136,9 +151,13 @@ def git_configure_repo(name):
   proc = subprocess.Popen(['git', 'push'], cwd=name, stdout=PIPE, stdin=PIPE)
   print proc.communicate()[0]
 
-# Creates an SSH key for the candidate with the name of user's name. This will be used for ssh'ing into the container and also, to provide
-# secure access from the cadidate's local and container boxes into the git server.
 def git_create_user(name):
+  """ Creates a user and grants them exclusive access to their private repo on the git server.
+  
+      Creates an SSH key for the candidate with the name of user's name. This will be used for 
+      ssh'ing into the container and also, to provide secure access from the cadidate's local 
+      machine and container boxes into the git server.
+  """
   # Create new user for the git repo by the same name
   # Generate a new ssh_key for this user 
   PIPE = subprocess.PIPE
