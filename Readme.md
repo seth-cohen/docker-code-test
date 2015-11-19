@@ -1,9 +1,9 @@
-#To Run:
+# To Run:
  * python labs_create.py 
   * Yes, I know... I will create a better name for it since it won't be specific to labs.
  * it will ask for a username, so type one in (no spaces)
 
-#What does this do?
+# What does this do?
  * The script will create a new SSH key for a new git user with the user name entered when running the script.
  * Create a new user in a gitolite managed EC2 git server.
   * Involves editing a special gitolite cloned repo config file, adding the public key, and pushing to the server
