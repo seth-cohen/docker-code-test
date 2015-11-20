@@ -1,6 +1,5 @@
 # To Run:
- * python labs_create.py 
-  * Yes, I know... I will create a better name for it since it won't be specific to labs.
+ * python docker_create.py 
  * it will ask for a username, so type one in (no spaces)
 
 # What does this do?
