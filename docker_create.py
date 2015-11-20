@@ -1,18 +1,11 @@
-import tutum      # Tutum API to fire up nodecluster and run docker image
-import sys        # For writing to std out and exiting the application
-import time       # Duh
-import threading  # Cause maybe it was a good idea to run the websocket event loop in a separate thread?
-import subprocess # Cause maybe it was a good idea to run git through subprocess.Popen()?
-import shutil     # to copy over the .pub key files for git
-import os         # to create any directories needed for shutil
-
-# TODO pull tutum globals and functions into separate module 
-tutum.user   = 'wayfairseth'
-tutum.apikey = '7a0aa0f595e3a3d9f8e5f9b3e1dd5956a69f3981'
-node_ready   = False
-nodecluster  = False # this will be the handle to the EC2 instance via the tutum API
-node         = False # this is the particular node that fired up on the EC2 instance
-service      = False # this is the service that will run the actual docker container
+import tutum        # Tutum API to fire up nodecluster and run docker image
+import sys          # For writing to std out and exiting the application
+import time         # Duh
+import threading    # Cause maybe it was a good idea to run the websocket event loop in a separate thread?
+import subprocess   #.Cause maybe it was a good idea to run git through subprocess.Popen()?
+import shutil       # to copy over the .pub key files for git
+import os           # to create any directories needed for shutil
+import ConfigParser # So we can parse our config file :) 
 
 def process_event(event):
   """ The handler called by the on_message event of the TutumEvents Stream SDK. The event loop runs in a separate thread.
@@ -102,7 +95,7 @@ def create_service(username, pub_key_file):
   return false
 
 # TODO Pull git methods into own module
-git_dir = r'/Users/seth/Labs/Gitserver/gitolite_config'
+
 def git_configure_repo(name):
   """ Configures the a private repository for the user on the git server with the name 'name'.
 
@@ -142,7 +135,6 @@ def git_configure_repo(name):
   if not os.path.exists(public_dst_path + r'/'):
     os.mkdir(public_dst_path)
   shutil.copy2(index_src, public_dst_path + r'/index.php')
-
   print '\t=>Adding the new files and directories'
   proc = subprocess.Popen(['git', 'add', '.'], cwd=name, stdout=PIPE, stdin=PIPE)
   print proc.communicate()[0] # debug only - print '\t=>commiting adding the new files'
@@ -160,6 +152,8 @@ def git_create_user(name):
   """
   # Create new user for the git repo by the same name
   # Generate a new ssh_key for this user 
+  if not os.path.exists('keys/'):
+    os.mkdir('keys/')
   PIPE = subprocess.PIPE
   proc = subprocess.Popen(['ssh-keygen', '-t', 'rsa', '-f', 'keys/' + name, '-N', ''], stdout=PIPE, stdin=PIPE)
   print proc.communicate()[0]
@@ -176,7 +170,7 @@ def git_create_user(name):
   # Here we are running shell commands through subprocess to execute the git calls necessary to manage the remote git server
   # via gitolite, when we push this change it will create a new user and repo and give only that user read/write access to it.
   print 'Updating gitolite config to control user access, modified config and added key'
-  proc = subprocess.Popen(['git', 'status'], cwd=git_dir, stdout=PIPE, stdin=PIPE)
+  proc = subprocess.Popen(['git', 'add', '.'], cwd=git_dir, stdout=PIPE, stdin=PIPE)
   print proc.communicate()[0] # debug only - print '\t=>committing changes'
   proc = subprocess.Popen(['git', 'commit', '-am', 'Added user and repo: %s; modified config and added key' % name], cwd=git_dir, stdout=PIPE, stdin=PIPE)
   print proc.communicate()[0] # debug only - print '\t=>pushing changes to remote'
@@ -193,6 +187,21 @@ def git_create_user(name):
   return src
 
 # --------------- ENTRY POINT ----------------
+home   = os.path.expanduser('~')
+config = ConfigParser.ConfigParser()
+if not config.read(home + r'/.dockerrc'):
+  print 'You must have a .dockerrc file in your home directory'
+  sys.exit()
+
+# TODO Yay!!! Globals
+tutum.user   = config.get('Tutum', 'user')
+tutum.apikey = config.get('Tutum', 'key')
+git_dir      = config.get('Git', 'dir')
+node_ready   = False
+nodecluster  = False # this will be the handle to the EC2 instance via the tutum API
+node         = False # this is the particular node that fired up on the EC2 instance
+service      = False # this is the service that will run the actual docker container
+
 name = raw_input('Enter candidate\'s username: ')
 
 # Need to set up the user's repos and access on the git server.
