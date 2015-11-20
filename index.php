@@ -103,7 +103,7 @@
           <li>Alternatively, you can simply sftp the files into the <span class="code">/var/www/html</span> directoryi. However, you will still need to push your code to the remote repo.</li>
         </ul>
       </li>
-      <li>Include the Database support file <span class="code">include once "private/dbo.php"</span>, this will provide you with an object that you can use to connect to the DB and write queries</li>
+      <li>Include the Database support file <span class="code">include once "private/pdo.php"</span>, this will provide you with an object that you can use to connect to the DB and write queries</li>
       <li>There are no other requirements or limitations other than being able to add new ToDo Items, mark them as complete or not and of course viewing them.
         <ul>
           <li>This can be as flashy as you want, can be a single page app or several different scripts</li>
