@@ -64,6 +64,7 @@
       <li>SSH into your private server and browse around. You should be able to locate this file (the one that you a reading right now) at <span class="code">/var/www/html/index.php</span>
         <ul>
           <li>Your remote server has already been configured to accept your private key, so all you need to do is point your client to the private key</li>
+          <li>You must use port 2222 and user name 'wayfairer' to connect</li>
         </ul>
       </li>      
     </ul>

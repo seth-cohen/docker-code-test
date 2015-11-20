@@ -142,7 +142,7 @@ def git_configure_repo(name):
   proc = subprocess.Popen(['git', 'push'], cwd=name, stdout=PIPE, stdin=PIPE)
   print proc.communicate()[0]
 
-def git_create_user(name)
+def git_create_user(name):
   """ Creates a user and grants them exclusive access to their private repo on the git server.
   
       Creates an SSH key for the candidate with the name of user's name. This will be used for 
