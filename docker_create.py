@@ -142,7 +142,7 @@ def git_configure_repo(name):
   proc = subprocess.Popen(['git', 'push'], cwd=name, stdout=PIPE, stdin=PIPE)
   print proc.communicate()[0]
 
-def git_create_user(name:
+def git_create_user(name)
   """ Creates a user and grants them exclusive access to their private repo on the git server.
   
       Creates an SSH key for the candidate with the name of user's name. This will be used for 
@@ -158,7 +158,7 @@ def git_create_user(name:
   print proc.communicate()[0]
   
   # Copy the public key file to the gitolite admin repo we should also use this key for administration
-  src = '/Users/seth/Docker/keys/' + name + '.pub'
+  src = 'keys/' + name + '.pub'
   dst = git_dir + '/keydir/' + name + '.pub'
   shutil.copy2(src, dst)
   
