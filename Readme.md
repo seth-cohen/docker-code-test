@@ -1,6 +1,12 @@
 # To Run:
  * python docker_create.py 
  * it will ask for a username, so type one in (no spaces)
+ * Note: A config file ~/.dockerrc must be present with the following sections and options
+  * [Tutum] 
+   * user = <Tutum API usernamne>
+   * key = <Tutum API key>
+  *[Git]
+   * dir = <Directory where gitolite config repo was cloned>
 
 # What does this do?
  * The script will create a new SSH key for a new git user with the user name entered when running the script.

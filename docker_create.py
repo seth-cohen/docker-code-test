@@ -95,7 +95,6 @@ def create_service(username, pub_key_file):
   return false
 
 # TODO Pull git methods into own module
-
 def git_configure_repo(name):
   """ Configures the a private repository for the user on the git server with the name 'name'.
 
@@ -105,12 +104,12 @@ def git_configure_repo(name):
   # Clone the repo that we just created when we created the user (we don't need to keep this; 
   #   just setting up the user's repo with the files they'll need)
   # Add the index.php file to the public folder add the PEM to the private folder
-  pvt_dst_path    = r'/Users/seth/Docker/' + name + r'/private'
-  pvt_key_src     = r'/Users/seth/Docker/keys/' + name
-  htaccess_src    = r'/Users/seth/Docker/.htaccess'
-  dl_pk_src       = r'/Users/seth/Docker/dl_pk.php' 
-  public_dst_path = r'/Users/seth/Docker/' + name
-  index_src       = r'/Users/seth/Docker/index.php' 
+  pvt_dst_path    = name + '/private'
+  pvt_key_src     = 'keys/' + name
+  htaccess_src    = '.htaccess'
+  dl_pk_src       = 'dl_pk.php' 
+  public_dst_path = name
+  index_src       = 'index.php'
  
   PIPE = subprocess.PIPE
   print 'Cloning the User\'s repository locally'
@@ -118,23 +117,23 @@ def git_configure_repo(name):
   print proc.communicate()[0] # debug only - print '\t=>Adding the index.php file and private key'
 
   # Actually copy the files over, creating the directories as necessary
-  if not os.path.exists(pvt_dst_path + r'/'):
+  if not os.path.exists(pvt_dst_path + '/'):
     os.mkdir(pvt_dst_path)
-  shutil.copy2(pvt_key_src, pvt_dst_path + r'/' + name)
-  shutil.copy2(dl_pk_src, pvt_dst_path + r'/dl_pk.php')
-  shutil.copy2(htaccess_src, pvt_dst_path + r'/.htaccess')
+  shutil.copy2(pvt_key_src, pvt_dst_path + '/' + name)
+  shutil.copy2(dl_pk_src, pvt_dst_path + '/' + dl_pk_src)
+  shutil.copy2(htaccess_src, pvt_dst_path + '/' + htaccess_src)
 
   # We need to replace the {1} tokens in the download file to point to the specific user's name
   filedata = None
-  with open(pvt_dst_path + r'/dl_pk.php', 'r') as dl_pk:
+  with open(pvt_dst_path + '/' + dl_pk_src, 'r') as dl_pk:
     filedata = dl_pk.read()
 
-  with open(pvt_dst_path + r'/dl_pk.php', 'w') as dl_pk:
+  with open(pvt_dst_path + '/' + dl_pk_src, 'w') as dl_pk:
     dl_pk.write(filedata.replace('{1}', name))
 
-  if not os.path.exists(public_dst_path + r'/'):
+  if not os.path.exists(public_dst_path + '/'):
     os.mkdir(public_dst_path)
-  shutil.copy2(index_src, public_dst_path + r'/index.php')
+  shutil.copy2(index_src, public_dst_path + '/' + index_src)
   print '\t=>Adding the new files and directories'
   proc = subprocess.Popen(['git', 'add', '.'], cwd=name, stdout=PIPE, stdin=PIPE)
   print proc.communicate()[0] # debug only - print '\t=>commiting adding the new files'
@@ -143,7 +142,7 @@ def git_configure_repo(name):
   proc = subprocess.Popen(['git', 'push'], cwd=name, stdout=PIPE, stdin=PIPE)
   print proc.communicate()[0]
 
-def git_create_user(name):
+def git_create_user(name:
   """ Creates a user and grants them exclusive access to their private repo on the git server.
   
       Creates an SSH key for the candidate with the name of user's name. This will be used for 
@@ -159,12 +158,12 @@ def git_create_user(name):
   print proc.communicate()[0]
   
   # Copy the public key file to the gitolite admin repo we should also use this key for administration
-  src = r'/Users/seth/Docker/keys/' + name + '.pub'
-  dst = git_dir + r'/keydir/' + name + '.pub'
+  src = '/Users/seth/Docker/keys/' + name + '.pub'
+  dst = git_dir + '/keydir/' + name + '.pub'
   shutil.copy2(src, dst)
   
   # Add the repo and user to the config file
-  with open(git_dir + r'/conf/gitolite.conf', 'a') as config_file:
+  with open(git_dir + '/conf/gitolite.conf', 'a') as config_file:
     config_file.write('\nrepo\t' + name + '\n\tRW+\t=\t' + name )
 
   # Here we are running shell commands through subprocess to execute the git calls necessary to manage the remote git server
@@ -180,7 +179,7 @@ def git_create_user(name):
   # Need to give the user access to his remote repository on the git server so ssh in and set that up
   # This will let us clone, via HTTP, the git repository that we made for this candidate on the git server.
   print 'Adding user %s to the git server. For HTTP access to only that repo on the container' % name
-  proc = subprocess.Popen(['ssh', 'ubuntu@52.91.239.205', 'sudo htpasswd -b %s %s %s' % (r'/etc/apache2/.htpassword', name, 'wAyfAir1')], stdout=PIPE, stdin=PIPE)
+  proc = subprocess.Popen(['ssh', 'ubuntu@52.91.239.205', 'sudo htpasswd -b %s %s %s' % ('/etc/apache2/.htpassword', name, 'wAyfAir1')], stdout=PIPE, stdin=PIPE)
   print proc.communicate()[0] # debug only
   
   # Return the public ssh file. We will use this in authorized_keys on the deployed container to ssh into it.
@@ -189,7 +188,7 @@ def git_create_user(name):
 # --------------- ENTRY POINT ----------------
 home   = os.path.expanduser('~')
 config = ConfigParser.ConfigParser()
-if not config.read(home + r'/.dockerrc'):
+if not config.read(home + '/.dockerrc'):
   print 'You must have a .dockerrc file in your home directory'
   sys.exit()
 

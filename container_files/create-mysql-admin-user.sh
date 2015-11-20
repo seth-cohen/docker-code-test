@@ -10,9 +10,8 @@ while [[ RET -ne 0 ]]; do
     RET=$?
 done
 
-PASS=${MYSQL_PASS:-$(pwgen -s 12 1)}
-_word=$( [ ${MYSQL_PASS} ] && echo "preset" || echo "random" )
-echo "=> Creating MySQL admin user (wayfairer) with ${_word} password"
+PASS = 'wAyfAir1'
+echo "=> Creating MySQL admin user (wayfairer) with default password"
 
 mysql -uroot -e "CREATE USER 'wayfairer'@'%' IDENTIFIED BY 'wAyfAir1'"
 mysql -uroot -e "GRANT ALL PRIVILEGES ON *.* TO 'wayfairer'@'%' WITH GRANT OPTION"
